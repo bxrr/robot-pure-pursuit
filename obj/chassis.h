@@ -4,6 +4,7 @@
 #include "main.h"
 #include "pid.h"
 #include <vector>
+#include <array>
 
 class Chassis
 {
@@ -12,8 +13,7 @@ private:
     std::vector<pros::Motor> right_motors;
 
 public:
-    Chassis(int left_motor_ports[], int right_motor_ports[], auto gearset=pros::E_MOTOR_GEARSET_06, bool reverse_spin=false
-            PID init_driveK=PID(1, 0, 0), PID init_rotateK=PID(1, 0, 0))
+    Chassis(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, pros::motor_gearset_e gearset=pros::E_MOTOR_GEARSET_06, bool reverse_spin=false)
     {
         for(int port : left_motor_ports)
             left_motors.push_back(pros::Motor(port, gearset, reverse_spin + port < 0));
@@ -50,7 +50,6 @@ public:
             motor.tare_position();
         for(pros::Motor motor : right_motors)
             motor.tare_position();
-        for(pros::ADIEncoder odom : odom_encoders)
     }
 
     double left_pos()
@@ -73,9 +72,9 @@ public:
         return sum / left_motors.size();
     }
     
-    double mtr_pos()
+    double pos()
     {
-        return (left_pos() + right_pos()) / 2
+        return (left_pos() + right_pos()) / 2;
     }
 
     double temp()

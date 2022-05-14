@@ -1,5 +1,5 @@
-#ifndef __PURE_PURSUIT__
-#define __PURE_PURSUIT__
+#ifndef __PURSUIT__
+#define __PURSUIT__
 
 #include "main.h"
 #include "chassis.h"
@@ -21,19 +21,22 @@ private:
     double degree;
 
 public:
-    MotionProfiler(Chassis init_chas, PID k, pros::Imu init_imu, pros::ADIEncoder init_odom)
-    : chas(init_chas), k(init_k), odom(init_odom), xpos(0), ypos(0), heading(0) {
+    PurePursuit(Chassis init_chas, pros::Imu init_imu, pros::ADIEncoder init_odom, PID init_k=PID(1,0,0))
+    : chas(init_chas), imu(init_imu), odom(init_odom), k(init_k) {
         imu.set_heading(180);
+        x_pos = 0;
+        y_pos = 0;
+        degree = 0;
     }
 
-    void zero_position()
+    void reset()
     {
         odom.reset();
         imu.set_heading(180);
         degree = 0;
     }
 
-    void drive_to(double x_tar, double y_tar, double deg_tar, float speed=1.0, int timeout=5000)
+    void drive_to(double x_tar, double y_tar, double deg_tar, float speed=1.0, int timeout=5000, pros::Controller con=pros::Controller(pros::E_CONTROLLER_MASTER))
     {
         double x_err = x_tar - x_pos;
         double y_err = y_tar - y_pos;
@@ -41,7 +44,7 @@ public:
         double odom_val = odom.get_value();
         double last_odom_val = odom.get_value();
 
-        degree %= 360;
+        degree = fmod(degree, 360);
         imu.set_heading(180);
         double turn_amount = deg_tar - degree;
         double deg_err;
@@ -54,7 +57,7 @@ public:
             odom_val = odom.get_value();
             x_pos += (odom_val - last_odom_val) * sin((180 - imu.get_heading()) * PI / 180);
             y_pos += (odom_val - last_odom_val) * cos((180 - imu.get_heading()) * PI / 180);
-            last_odom_val = odom_val
+            last_odom_val = odom_val;
 
             x_err = x_tar - x_pos;
             y_err = y_tar - y_pos;
@@ -63,14 +66,17 @@ public:
 
             double left_mult = (x_err + deg_err) / (y_err >= 1 ? y_err : 1);
             double right_mult = (y_err - deg_err) / (x_err >= 1 ? x_err : 1);
-            if(max(left_mult, right_mult) * magnitute > 127)
-                magnitute = 127 / max(left_mult, right_mult);
+            if(std::max(left_mult, right_mult) * magnitude > 127)
+                magnitude = 127 / std::max(left_mult, right_mult);
 
-            double left_speed = magnitute * left_mult;
-            double right_speed = magnitute * right_mult;
+            double left_speed = magnitude * left_mult;
+            double right_speed = magnitude * right_mult;
 
             chas.spin_left(k.kP * left_speed + k.kD * last_odom_val - odom_val * speed);
             chas.spin_right(k.kP * right_speed + k.kD * last_odom_val - odom_val * speed);
+
+            if(time % 50 == 0)
+                con.print(2, 0, "%.2f, %.2f         ", x_pos, y_pos);
 
             pros::delay(10);
             time += 10;

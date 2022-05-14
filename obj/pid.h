@@ -16,7 +16,7 @@ public:
     : kP(init_kP), kI(init_kI), kD(init_kD), integral(0)
     {}
 
-    double calculate(double error, double multiplier=1.0, bool count_i)
+    double calculate(double error, bool count_i=true, double multiplier=1.0)
     {
         integral += error * count_i;
         static double last_error = error;

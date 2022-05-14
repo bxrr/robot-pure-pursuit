@@ -12,14 +12,14 @@ private:
     int num_actuations;
 
 public:
-    Piston(char port, bool init_status=false) 
+    Piston(int port, bool init_status=false) 
     : piston(port) {
         set(init_status);
     }
 
     void set(bool extend)
     {
-        piston.set(extend);
+        piston.set_value(extend);
         status = extend;
     }
 
@@ -28,7 +28,7 @@ public:
         set(!status);
     }
 
-    bool status()
+    bool get_status()
     {
         return status;
     }
