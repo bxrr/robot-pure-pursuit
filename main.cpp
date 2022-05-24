@@ -1,21 +1,28 @@
 #include "main.h"
 #include "global.h"
 #include "driver.h"
+#include "auton.h"
 
 using namespace glb;
 using namespace pros;
 
 
+Auton auton = autons.at(0);
+
 void initialize() 
 {
-	pros::lcd::initialize();
-	
+	lcd::initialize();
+	auton = auton_selector(autons);
 }
 
-void autonomous() {}
+void autonomous()
+{
+	auton.run();
+}
 
 void opcontrol() 
 {
+	aut.reset();
 	int time = 0;
 	
 	while(true)
@@ -24,7 +31,9 @@ void opcontrol()
 		print_info(time);
 
 		if(con.get_digital(E_CONTROLLER_DIGITAL_DOWN))
-			aut_controller.drive_to(1000, 1000, 90);
+			autonomous();
+		if(con.get_digital(E_CONTROLLER_DIGITAL_RIGHT))
+			aut.reset();
 
 		delay(1);
 		time++;

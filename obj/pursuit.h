@@ -34,9 +34,10 @@ public:
         odom.reset();
         imu.set_heading(180);
         degree = 0;
+        chas.reset();
     }
 
-    void drive_to(double x_tar, double y_tar, double deg_tar, float speed=1.0, int timeout=5000, pros::Controller con=pros::Controller(pros::E_CONTROLLER_MASTER))
+    void drive_to(double x_tar, double y_tar, double deg_tar, float speed=1.0, int timeout=5000)
     {
         double x_err = x_tar - x_pos;
         double y_err = y_tar - y_pos;
@@ -46,9 +47,9 @@ public:
 
         degree = fmod(degree, 360);
         imu.set_heading(180);
-        double turn_amount = deg_tar - degree;
+        double target_heading = 180 + deg_tar - degree;
         double deg_err;
-        turn_amount = (turn_amount > 180) ? -(360 - turn_amount) : ((turn_amount < -180) ? (360 + turn_amount) : (turn_amount)); // optimize turn direction
+        target_heading = (target_heading > 180) ? -(360 - target_heading) : ((target_heading < -180) ? (360 + target_heading) : (target_heading));
 
         int time = 0;
 
@@ -62,24 +63,10 @@ public:
             x_err = x_tar - x_pos;
             y_err = y_tar - y_pos;
             magnitude = sqrt(x_err * x_err + y_err * y_err);
-            deg_err = (180 + turn_amount) - imu.get_heading();
+            deg_err = target_heading - imu.get_heading();
 
-            double left_mult = (x_err + deg_err) / (y_err >= 1 ? y_err : 1);
-            double right_mult = (y_err - deg_err) / (x_err >= 1 ? x_err : 1);
-            if(std::max(left_mult, right_mult) * magnitude > 127)
-                magnitude = 127 / std::max(left_mult, right_mult);
-
-            double left_speed = magnitude * left_mult;
-            double right_speed = magnitude * right_mult;
-
-            chas.spin_left(k.kP * left_speed + k.kD * last_odom_val - odom_val * speed);
-            chas.spin_right(k.kP * right_speed + k.kD * last_odom_val - odom_val * speed);
-
-            if(time % 50 == 0)
-                con.print(2, 0, "%.2f, %.2f         ", x_pos, y_pos);
-
-            pros::delay(10);
-            time += 10;
+            pros::delay(1);
+            time += 1;
         }
         chas.stop();
     }

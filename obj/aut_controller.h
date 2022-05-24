@@ -1,14 +1,14 @@
-#ifndef __AUT_FUNC__
-#define __AUT_FUNC__
+#ifndef __AUT_CONTROLLER__
+#define __AUT_CONTROLLER__
 
 #include "main.h"
 #include "chassis.h"
 #include "pid.h"
 
 
-class AutonFunc
+class AutonController
 {
-private:
+protected:
     Chassis chas;
     pros::Imu imu;
     PID driveK;
@@ -18,13 +18,13 @@ private:
     double ideal_degree;
 
 public:
-    AutonFunc(Chassis init_chas, pros::Imu init_imu, PID init_driveK=PID(1, 0, 0), PID init_rotateK=PID(1, 0, 0), PID init_straightK=PID(0, 0, 0))
+    AutonController(Chassis init_chas, pros::Imu init_imu, PID init_driveK=PID(1, 0, 0), PID init_rotateK=PID(1, 0, 0), PID init_straightK=PID(0, 0, 0))
     : chas(init_chas), imu(init_imu), driveK(init_driveK), rotateK(init_rotateK), straightK(init_straightK) {
         degree = 0;
         ideal_degree = 0;
     }
 
-    void drive(double distance, int timeout=5000, double max_speed=120, pros::Controller con=Controller(pros::E_CONTROLLER_MASTER))
+    void drive(double distance, int timeout=5000, double max_speed=120, pros::Controller con=pros::Controller(pros::E_CONTROLLER_MASTER))
     {
         int time = 0;
         double target = distance + chas.pos();
@@ -38,7 +38,7 @@ public:
         while(time < timeout)
         {
             double error = target - chas.pos();
-            double speed = driveK.calculate(error, error / abs(error) == -distance / abs(distance));
+            double speed = driveK.calculate(error);
             double correction = straightK.calculate(target_heading - imu.get_heading());
             
             chas.spin_left(speed + correction);
@@ -46,17 +46,10 @@ public:
 
             if(time % 50 == 0) con.print(2, 0, "%.2f            ", error);
 
-            if(abs(error) < 1.0)
+            if(abs(error) < 0.1)
             {
-                if(!within_range)
-                {
-                    within_range_timer = time;
-                    within_range = true;
-                }
-                else if(within_range_timer + 100 < time)
-                    break;
+                break;
             }
-            else within_range = false;
 
             pros::delay(5);
             time += 5;
@@ -66,10 +59,10 @@ public:
         degree += imu.get_heading() - 180;
     }
 
-    void rotate(double degrees, int timeout=3000, pros::Controller con=Controller(pros::E_CONTROLLER_MASTER))
+    void rotate(double degrees, int timeout=3000, pros::Controller con=pros::Controller(pros::E_CONTROLLER_MASTER))
     {
         int time = 0;
-        double target = distance + chas.pos();
+        double target = degrees + degree;
 
         double start_heading = (degrees < 0 ? 330 : 30);
         imu.set_heading(start_heading);
@@ -85,17 +78,10 @@ public:
 
             if(time % 50 == 0) con.print(2, 0, "%.2f            ", target - chas.pos());
 
-            if(abs(error) < 0.1)
+            if(abs(error) < 0.05)
             {
-                if(!within_range)
-                {
-                    within_range_timer = time;
-                    within_range = true;
-                }
-                else if(within_range_timer + 100 < time)
-                    break;
+                break;
             }
-            else within_range = false;
 
             pros::delay(5);
             time += 5;
@@ -104,6 +90,21 @@ public:
         chas.stop();
         ideal_degree += degrees;
         degree += imu.get_heading() - 180;
+    }
+
+    void rotate_to(double degree_to, int timeout=3000, pros::Controller con=pros::Controller(pros::E_CONTROLLER_MASTER))
+    {
+        double rotate_amt = degree_to - degree;
+        rotate_amt = (degree > 180) ? -(360 - degree) : ((degree < -180) ? (360 + degree) : (degree)); // optimize the turn direction
+        rotate(rotate_amt, timeout, con);
+    }
+
+    void reset()
+    {
+        degree = 0;
+        ideal_degree = 0;
+        imu.reset();
+        chas.reset();
     }
 };
 

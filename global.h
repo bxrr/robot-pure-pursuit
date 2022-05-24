@@ -6,6 +6,11 @@
 #include "obj/pid.h"
 #include "obj/piston.h"
 #include "obj/pursuit.h"
+#include "obj/aut_controller.h"
+#include "obj/odom_controller.h"
+
+
+typedef void(*fptr)();
 
 namespace glb
 {
@@ -15,17 +20,12 @@ namespace glb
     #define P_FL 3
     #define P_BR 4
     #define P_FR 5
-
-    #define P_ODOM_TOP 'A'
-    #define P_ODOM_BOT 'B'
-
     // objects =============================
     pros::Controller con(pros::E_CONTROLLER_MASTER);
     pros::Imu imu(P_IMU);
-    pros::ADIEncoder odom(P_ODOM_TOP, P_ODOM_BOT);
-    Chassis chas({P_BL, P_FL}, {P_BR, P_FR}, pros::E_MOTOR_GEARSET_06, false);
     
-    PurePursuit aut_controller(chas, imu, odom, PID(1,0,0));
+    Chassis chas({P_BL, P_FL}, {P_BR, P_FR}, pros::E_MOTOR_GEARSET_06, false);
+    AutonController aut(chas, imu, PID(1, 0, 0), PID(1, 0, 0), PID(0, 0, 0));
 }
 
 #endif

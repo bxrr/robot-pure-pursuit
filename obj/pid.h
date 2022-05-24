@@ -10,7 +10,7 @@ private:
     double integral;
 
 public:
-    const double kP, kI, kD;
+    double kP, kI, kD;
 
     PID(double init_kP, double init_kI=0, double init_kD=0)
     : kP(init_kP), kI(init_kI), kD(init_kD), integral(0)
