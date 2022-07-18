@@ -5,6 +5,7 @@
 #include "global.h"
 #include "obj/auton_obj.h"
 #include <vector>
+#include <string.h>
 
 using namespace glb;
 using namespace pros;
@@ -89,10 +90,11 @@ void tank_drive()
     }
 }
 
-void print_info(int time)
+void print_info(int time, std::string aut_name)
 {
     if(time % 500 == 0 && time % 200 != 0 && time % 200 != 0) con.print(0, 0, "TEMP: %.1lf         ", chas.temp());
     if(time % 200 == 0 && time % 500 != 0 && time % 5000 != 0) con.print(1, 0, "%.2f : %.2f", imu.get_heading(), chas.pos());
+    if(time % 5000 == 0) con.print(2, 0, "%s                ", aut_name);
 }
 
 void calibrate_robot()

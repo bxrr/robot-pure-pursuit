@@ -28,7 +28,7 @@ void opcontrol()
 	while(true)
 	{
 		arcade_drive();
-		print_info(time);
+		print_info(time, auton.get_name());
 
 		if(con.get_digital(E_CONTROLLER_DIGITAL_DOWN))
 			autonomous();

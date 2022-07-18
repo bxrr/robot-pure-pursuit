@@ -13,7 +13,8 @@ class PurePursuit
 {
 private:
     Chassis chas;
-    PID k;
+    PID driveK;
+    PID correctionK;
     pros::Imu imu;
     pros::ADIEncoder odom;
     
@@ -21,8 +22,8 @@ private:
     double degree;
 
 public:
-    PurePursuit(Chassis init_chas, pros::Imu init_imu, pros::ADIEncoder init_odom, PID init_k=PID(1,0,0))
-    : chas(init_chas), imu(init_imu), odom(init_odom), k(init_k) {
+    PurePursuit(Chassis init_chas, pros::Imu init_imu, pros::ADIEncoder init_odom, PID init_driveK=PID(0.5,0,0), PID init_correctionK=PID(1,0,0))
+    : chas(init_chas), imu(init_imu), odom(init_odom), driveK(init_driveK), correctionK(init_correctionK) {
         imu.set_heading(180);
         x_pos = 0;
         y_pos = 0;
@@ -65,6 +66,9 @@ public:
             magnitude = sqrt(x_err * x_err + y_err * y_err);
             deg_err = target_heading - imu.get_heading();
 
+            chas.spin_left(std::min(driveK.calculate(magnitude), 127) + correctionK.calculate(deg_err));
+            chas.spin_right(std::min(driveK.calculate(magnitude), 127) - correctionK.calculate(deg_err));
+
             pros::delay(1);
             time += 1;
         }
@@ -72,4 +76,4 @@ public:
     }
 };
 
-#endif
+#endifpros
