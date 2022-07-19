@@ -6,7 +6,6 @@
 #include "pid.h"
 #include <math.h>
 
-
 #define PI 3.14159265
 
 class PurePursuit
@@ -66,8 +65,8 @@ public:
             magnitude = sqrt(x_err * x_err + y_err * y_err);
             deg_err = target_heading - imu.get_heading();
 
-            chas.spin_left(std::min(driveK.calculate(magnitude), 127) + correctionK.calculate(deg_err));
-            chas.spin_right(std::min(driveK.calculate(magnitude), 127) - correctionK.calculate(deg_err));
+            chas.spin_left(std::min(driveK.calculate(magnitude), 127.0) + correctionK.calculate(deg_err));
+            chas.spin_right(std::min(driveK.calculate(magnitude), 127.0) - correctionK.calculate(deg_err));
 
             pros::delay(1);
             time += 1;
@@ -76,4 +75,4 @@ public:
     }
 };
 
-#endifpros
+#endif
